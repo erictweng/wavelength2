@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:chat:*)",
+      "Bash(pkill:*)"
+    ]
+  }
+}

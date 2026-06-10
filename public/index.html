@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wavelength</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container" id="app-container">
+    <!-- Header (hidden on home screen) -->
+    <header class="header" id="header" style="display: none;">
+      <h1>Wave<span>length</span></h1>
+      <div class="player-score" id="player-score"></div>
+    </header>
+
+    <!-- Main layout -->
+    <div class="main-layout">
+      <!-- Game area -->
+      <main class="game-area" id="game-area">
+        <!-- Home Screen -->
+        <div class="screen active" id="screen-home">
+          <h1 class="home-title">Wave<span>length</span></h1>
+          <p class="home-subtitle">A multiplayer guessing game</p>
+
+          <div class="input-group">
+            <label for="player-name">Your Name</label>
+            <input type="text" id="player-name" placeholder="Enter your name" maxlength="20" autocomplete="off">
+          </div>
+
+          <div class="input-group" id="join-form">
+            <label for="room-code-input">Room Code (to join)</label>
+            <input type="text" id="room-code-input" placeholder="ABCD" maxlength="4" autocomplete="off" style="text-transform: uppercase;">
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-primary btn-large" id="btn-create">Create Game</button>
+            <button class="btn btn-primary btn-large" id="btn-join">Join Game</button>
+          </div>
+
+          <p class="error-message" id="home-error" style="display: none;"></p>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div class="screen" id="screen-lobby">
+          <div class="card">
+            <div class="card-header">Room Code</div>
+            <div class="room-code" id="room-code-display"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Players</div>
+            <div class="players-list" id="players-list"></div>
+          </div>
+
+          <div class="rounds-selector" id="rounds-selector">
+            <label for="rounds-select">Rounds:</label>
+            <select id="rounds-select">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary btn-large" id="btn-start" disabled>Start Game</button>
+          <p class="waiting-message" id="lobby-waiting" style="display: none;">
+            <span class="spinner"></span>Waiting for host to start...
+          </p>
+        </div>
+
+        <!-- Compose Screen (Clue-giver) -->
+        <div class="screen" id="screen-compose">
+          <div id="compose-giver" style="display: none;">
+            <p class="clue-giver-badge">You are the Clue Giver</p>
+
+            <!-- Spectrum setup (shown when no spectrum set) -->
+            <div id="spectrum-setup">
+              <p>Choose a spectrum or create your own:</p>
+
+              <div class="preset-chips" id="preset-chips"></div>
+
+              <div class="input-group" style="margin-top: var(--spacing-md);">
+                <label>Custom Spectrum</label>
+                <div style="display: flex; gap: var(--spacing-sm);">
+                  <input type="text" id="left-label" placeholder="Left end" maxlength="30">
+                  <input type="text" id="right-label" placeholder="Right end" maxlength="30">
+                </div>
+              </div>
+            </div>
+
+            <!-- Spectrum display (shown when spectrum is set) -->
+            <div id="spectrum-readonly" style="display: none;">
+              <div class="spectrum-display">
+                <span class="spectrum-end left" id="spectrum-left"></span>
+                <span class="spectrum-arrow"></span>
+                <span class="spectrum-end right" id="spectrum-right"></span>
+              </div>
+              <button class="link-btn" id="btn-change-spectrum">Stuck? Change category</button>
+            </div>
+
+            <!-- Target display -->
+            <div class="target-display" id="target-display"></div>
+
+            <!-- Dial showing target -->
+            <div class="dial-container" id="compose-dial-container"></div>
+
+            <!-- Hint input -->
+            <div class="hint-input-group">
+              <label for="hint-input">Your Hint (no numbers!)</label>
+              <textarea id="hint-input" placeholder="Give a hint that fits the target on the spectrum..." maxlength="200"></textarea>
+            </div>
+
+            <button class="btn btn-primary btn-large" id="btn-submit-hint">Submit Hint</button>
+          </div>
+
+          <div id="compose-waiting" style="display: none;">
+            <p class="waiting-message">
+              <span class="spinner"></span><span id="giver-name"></span> is thinking of a hint...
+            </p>
+          </div>
+        </div>
+
+        <!-- Guess Screen -->
+        <div class="screen" id="screen-guess">
+          <div id="guess-guesser" style="display: none;">
+            <div class="spectrum-display">
+              <span class="spectrum-end left" id="guess-spectrum-left"></span>
+              <span class="spectrum-arrow"></span>
+              <span class="spectrum-end right" id="guess-spectrum-right"></span>
+            </div>
+
+            <div class="hint-display">
+              <p class="hint-label">Hint</p>
+              <p class="hint-text" id="guess-hint"></p>
+            </div>
+
+            <div class="dial-container" id="guess-dial-container">
+              <div class="dial-labels">
+                <span class="dial-label left" id="dial-label-left"></span>
+                <span class="dial-label right" id="dial-label-right"></span>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-large" id="btn-lock-guess">Lock Guess</button>
+          </div>
+
+          <div id="guess-waiting" style="display: none;">
+            <div class="hint-display">
+              <p class="hint-label">Your Hint</p>
+              <p class="hint-text" id="giver-hint-display"></p>
+            </div>
+
+            <p class="waiting-message">
+              <span class="spinner"></span>Waiting for guesses...
+            </p>
+            <p class="guess-progress" id="guess-progress"></p>
+          </div>
+
+          <div id="guess-locked" style="display: none;">
+            <p class="waiting-message">
+              <span class="spinner"></span>Guess locked! Waiting for others...
+            </p>
+            <p class="guess-progress" id="locked-progress"></p>
+          </div>
+        </div>
+
+        <!-- Reveal Screen -->
+        <div class="screen" id="screen-reveal">
+          <div class="spectrum-display">
+            <span class="spectrum-end left" id="reveal-spectrum-left"></span>
+            <span class="spectrum-arrow"></span>
+            <span class="spectrum-end right" id="reveal-spectrum-right"></span>
+          </div>
+
+          <div class="hint-display">
+            <p class="hint-label">Hint</p>
+            <p class="hint-text" id="reveal-hint"></p>
+          </div>
+
+          <div class="dial-container" id="reveal-dial-container">
+            <div class="dial-labels">
+              <span class="dial-label left" id="reveal-dial-left"></span>
+              <span class="dial-label right" id="reveal-dial-right"></span>
+            </div>
+          </div>
+
+          <div class="giver-score" id="giver-score-display"></div>
+
+          <div class="card">
+            <div class="card-header">Results</div>
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>Guess</th>
+                  <th>Off by</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Standings</div>
+            <div class="standings-list" id="standings-list"></div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-primary" id="btn-next-turn">Next Turn</button>
+            <button class="btn btn-secondary" id="btn-change-spectrum-reveal">Change Spectrum</button>
+          </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div class="screen" id="screen-gameover">
+          <div class="winner-banner">
+            <h2>Game Over!</h2>
+            <p class="winner-name" id="winner-name"></p>
+            <p>wins!</p>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Final Standings</div>
+            <div class="standings-list" id="final-standings"></div>
+          </div>
+
+          <button class="btn btn-primary btn-large" id="btn-play-again">Play Again</button>
+        </div>
+      </main>
+
+      <!-- Chat Sidebar -->
+      <aside class="chat-sidebar" id="chat-sidebar" style="display: none;">
+        <div class="chat-header">Chat</div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input-container">
+          <input type="text" id="chat-input" placeholder="Type a message..." maxlength="500" autocomplete="off">
+          <button class="btn btn-primary btn-small" id="btn-send-chat">Send</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Fireworks canvas -->
+  <canvas id="fireworks-canvas"></canvas>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="presets.js"></script>
+  <script src="dial.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
