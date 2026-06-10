@@ -768,19 +768,52 @@ input[type="text"]::placeholder {
   }
 }
 
-/* Rounds selector */
-.rounds-selector {
+/* Lobby settings */
+.lobby-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  width: 100%;
+  max-width: 280px;
+}
+
+.setting-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--spacing-md);
 }
 
-.rounds-selector label {
+.setting-row label {
   font-weight: 500;
 }
 
-.rounds-selector select {
-  width: 80px;
+.setting-row select {
+  width: 120px;
+}
+
+/* Timer display */
+.timer-display {
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.timer-value {
+  display: inline-block;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent-coral);
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-value.warning {
+  color: var(--accent-coral-dark);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 /* Link style for change spectrum */

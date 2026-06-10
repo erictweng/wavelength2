@@ -53,15 +53,27 @@
             <div class="players-list" id="players-list"></div>
           </div>
 
-          <div class="rounds-selector" id="rounds-selector">
-            <label for="rounds-select">Rounds:</label>
-            <select id="rounds-select">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3" selected>3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
+          <div class="lobby-settings" id="lobby-settings">
+            <div class="setting-row">
+              <label for="rounds-select">Rounds:</label>
+              <select id="rounds-select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <label for="timer-select">Hint Timer:</label>
+              <select id="timer-select">
+                <option value="0">No limit</option>
+                <option value="30">30 seconds</option>
+                <option value="60" selected>1 minute</option>
+                <option value="90">1.5 minutes</option>
+                <option value="120">2 minutes</option>
+              </select>
+            </div>
           </div>
 
           <button class="btn btn-primary btn-large" id="btn-start" disabled>Start Game</button>
@@ -73,6 +85,9 @@
         <!-- Compose Screen (Clue-giver) -->
         <div class="screen" id="screen-compose">
           <div id="compose-giver" style="display: none;">
+            <div class="timer-display" id="giver-timer" style="display: none;">
+              <span class="timer-value" id="giver-timer-value"></span>
+            </div>
             <p class="clue-giver-badge">You are the Clue Giver</p>
 
             <!-- Spectrum setup (shown when no spectrum set) -->
@@ -100,9 +115,6 @@
               <button class="link-btn" id="btn-change-spectrum">Stuck? Change category</button>
             </div>
 
-            <!-- Target display -->
-            <div class="target-display" id="target-display"></div>
-
             <!-- Dial showing target -->
             <div class="dial-container" id="compose-dial-container"></div>
 
@@ -116,9 +128,16 @@
           </div>
 
           <div id="compose-waiting" style="display: none;">
+            <div class="timer-display" id="compose-timer" style="display: none;">
+              <span class="timer-value" id="compose-timer-value"></span>
+            </div>
             <p class="waiting-message">
               <span class="spinner"></span><span id="giver-name"></span> is thinking of a hint...
             </p>
+            <div class="card" style="margin-top: var(--spacing-lg);">
+              <div class="card-header">Standings</div>
+              <div class="standings-list" id="compose-standings"></div>
+            </div>
           </div>
         </div>
 

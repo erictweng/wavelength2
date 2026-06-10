@@ -16,6 +16,8 @@
   let revealAnimationPlayed = false;
   let currentScreen = 'home';
   let isTransitioning = false;
+  let timerInterval = null;
+  let timerEndTime = null;
 
   // Dial instances
   let composeDial = null;
@@ -47,8 +49,9 @@
     // Lobby
     roomCodeDisplay: document.getElementById('room-code-display'),
     playersList: document.getElementById('players-list'),
-    roundsSelector: document.getElementById('rounds-selector'),
+    lobbySettings: document.getElementById('lobby-settings'),
     roundsSelect: document.getElementById('rounds-select'),
+    timerSelect: document.getElementById('timer-select'),
     btnStart: document.getElementById('btn-start'),
     lobbyWaiting: document.getElementById('lobby-waiting'),
 
@@ -63,11 +66,15 @@
     spectrumLeft: document.getElementById('spectrum-left'),
     spectrumRight: document.getElementById('spectrum-right'),
     btnChangeSpectrum: document.getElementById('btn-change-spectrum'),
-    targetDisplay: document.getElementById('target-display'),
     composeDialContainer: document.getElementById('compose-dial-container'),
     hintInput: document.getElementById('hint-input'),
     btnSubmitHint: document.getElementById('btn-submit-hint'),
     giverName: document.getElementById('giver-name'),
+    giverTimer: document.getElementById('giver-timer'),
+    giverTimerValue: document.getElementById('giver-timer-value'),
+    composeTimer: document.getElementById('compose-timer'),
+    composeTimerValue: document.getElementById('compose-timer-value'),
+    composeStandings: document.getElementById('compose-standings'),
 
     // Guess
     guessGuesser: document.getElementById('guess-guesser'),
@@ -272,6 +279,59 @@
     }, duration);
   }
 
+  // Timer functions
+  function startTimer(startedAt, duration) {
+    // Clear any existing timer
+    if (timerInterval) {
+      clearInterval(timerInterval);
+    }
+
+    timerEndTime = startedAt + (duration * 1000);
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((timerEndTime - now) / 1000));
+
+      const minutes = Math.floor(remaining / 60);
+      const seconds = remaining % 60;
+      const display = minutes > 0
+        ? `${minutes}:${seconds.toString().padStart(2, '0')}`
+        : `${seconds}`;
+
+      // Update both timer displays
+      elements.giverTimerValue.textContent = display;
+      elements.composeTimerValue.textContent = display;
+
+      // Add warning class when under 10 seconds
+      const isWarning = remaining <= 10 && remaining > 0;
+      elements.giverTimerValue.classList.toggle('warning', isWarning);
+      elements.composeTimerValue.classList.toggle('warning', isWarning);
+
+      if (remaining <= 0) {
+        stopTimer();
+      }
+    };
+
+    // Show timer displays
+    elements.giverTimer.style.display = 'block';
+    elements.composeTimer.style.display = 'block';
+
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 250);
+  }
+
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    timerEndTime = null;
+    elements.giverTimer.style.display = 'none';
+    elements.composeTimer.style.display = 'none';
+    elements.giverTimerValue.classList.remove('warning');
+    elements.composeTimerValue.classList.remove('warning');
+  }
+
   // Game actions
   function createGame() {
     const name = elements.playerName.value.trim();
@@ -325,7 +385,8 @@
 
   function startGame() {
     const rounds = parseInt(elements.roundsSelect.value) || 3;
-    socket.emit('startGame', rounds);
+    const timerDuration = parseInt(elements.timerSelect.value) || 0;
+    socket.emit('startGame', { rounds, timerDuration });
   }
 
   function changeSpectrum() {
@@ -412,7 +473,7 @@
 
     // Host controls
     const isHost = myId === gameState.hostId;
-    elements.roundsSelector.style.display = isHost ? 'flex' : 'none';
+    elements.lobbySettings.style.display = isHost ? 'flex' : 'none';
     elements.btnStart.style.display = isHost ? 'block' : 'none';
     elements.lobbyWaiting.style.display = isHost ? 'none' : 'block';
 
@@ -427,6 +488,13 @@
     elements.composeGiver.style.display = isGiver ? 'block' : 'none';
     elements.composeWaiting.style.display = isGiver ? 'none' : 'block';
 
+    // Handle timer
+    if (gameState.timerDuration && gameState.timerStartedAt) {
+      startTimer(gameState.timerStartedAt, gameState.timerDuration);
+    } else {
+      stopTimer();
+    }
+
     if (isGiver) {
       // Spectrum setup vs readonly
       const hasSpectrum = gameState.spectrum !== null;
@@ -438,11 +506,8 @@
         elements.spectrumRight.textContent = gameState.spectrum.rightLabel;
       }
 
-      // Target display
-      const target = gameState.round?.target;
-      elements.targetDisplay.textContent = `Target: ${target}`;
-
       // Create/update dial for clue-giver showing target
+      const target = gameState.round?.target;
       if (!composeDial) {
         composeDial = new WavelengthDial(elements.composeDialContainer, {
           interactive: false,
@@ -460,6 +525,9 @@
       // Show who is giving
       const giver = gameState.players[gameState.giverId];
       elements.giverName.textContent = giver ? giver.name : 'Someone';
+
+      // Show standings for non-givers
+      renderStandings(elements.composeStandings);
     }
   }
 
@@ -719,6 +787,12 @@
       if (myId !== state.giverId) {
         showToast(`${giverName} submitted a hint!`);
       }
+      stopTimer();
+    }
+
+    // Stop timer when leaving compose phase
+    if (state.phase !== 'compose' && previousPhase === 'compose') {
+      stopTimer();
     }
 
     // Update screen based on phase

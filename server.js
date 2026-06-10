@@ -69,6 +69,8 @@ function broadcastState(room) {
       roundsTarget: room.roundsTarget,
       spectrum: room.spectrum,
       giverId,
+      timerDuration: room.timerDuration || 0,
+      timerStartedAt: room.timerStartedAt || null,
       round: room.round ? {
         hint: room.round.hint,
         guesses: room.round.guesses,
@@ -105,6 +107,13 @@ function startTurn(room) {
     guesses: {},
     giverScore: 0
   };
+
+  // Start timer if configured
+  if (room.timerDuration > 0) {
+    room.timerStartedAt = Date.now();
+  } else {
+    room.timerStartedAt = null;
+  }
 
   broadcastState(room);
 }
@@ -238,7 +247,7 @@ io.on('connection', (socket) => {
     broadcastState(room);
   });
 
-  socket.on('startGame', (rounds) => {
+  socket.on('startGame', (options) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     if (!room || socket.id !== room.hostId) return;
@@ -246,7 +255,12 @@ io.on('connection', (socket) => {
     const connected = getConnectedOrder(room);
     if (connected.length < 2) return;
 
+    // Handle both old format (just rounds number) and new format (object)
+    const rounds = typeof options === 'object' ? options.rounds : options;
+    const timerDuration = typeof options === 'object' ? options.timerDuration : 0;
+
     room.roundsTarget = Math.max(1, Math.min(5, parseInt(rounds) || 1));
+    room.timerDuration = Math.max(0, Math.min(300, parseInt(timerDuration) || 0));
     room.roundNumber = 1;
     room.turnIndex = 0;
     room.turnNumber = 0;
@@ -277,6 +291,7 @@ io.on('connection', (socket) => {
 
     room.round.hint = hint?.trim() || '';
     room.phase = 'guess';
+    room.timerStartedAt = null; // Clear timer when hint is submitted
 
     broadcastState(room);
   });
