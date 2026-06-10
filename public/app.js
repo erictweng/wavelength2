@@ -108,7 +108,10 @@
     btnSendChat: document.getElementById('btn-send-chat'),
 
     // Fireworks
-    fireworksCanvas: document.getElementById('fireworks-canvas')
+    fireworksCanvas: document.getElementById('fireworks-canvas'),
+
+    // Toast
+    toast: document.getElementById('toast')
   };
 
   // Initialize
@@ -258,6 +261,15 @@
     setTimeout(() => {
       elements.homeError.style.display = 'none';
     }, 5000);
+  }
+
+  // Show toast notification
+  function showToast(message, duration = 3000) {
+    elements.toast.textContent = message;
+    elements.toast.classList.add('show');
+    setTimeout(() => {
+      elements.toast.classList.remove('show');
+    }, duration);
   }
 
   // Game actions
@@ -698,6 +710,15 @@
     // Reset reveal animation flag on phase change
     if (state.phase !== 'reveal' && state.phase !== previousPhase) {
       revealAnimationPlayed = false;
+    }
+
+    // Show toast when hint is submitted (phase changes to guess)
+    if (state.phase === 'guess' && previousPhase === 'compose') {
+      const giver = state.players[state.giverId];
+      const giverName = giver ? giver.name : 'The clue giver';
+      if (myId !== state.giverId) {
+        showToast(`${giverName} submitted a hint!`);
+      }
     }
 
     // Update screen based on phase
