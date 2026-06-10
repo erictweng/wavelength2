@@ -12,12 +12,14 @@
   let gameState = null;
   let myId = null;
   let myName = null;
+  let currentRoomCode = null;
   let guessLocked = false;
   let revealAnimationPlayed = false;
   let currentScreen = 'home';
   let isTransitioning = false;
   let timerInterval = null;
   let timerEndTime = null;
+  let isReconnecting = false;
 
   // Dial instances
   let composeDial = null;
@@ -344,6 +346,7 @@
     socket.emit('createRoom', name, (response) => {
       if (response.success) {
         myId = socket.id;
+        currentRoomCode = response.code;
       } else {
         showError(response.error || 'Failed to create game');
       }
@@ -367,6 +370,7 @@
     socket.emit('joinRoom', code, name, (response) => {
       if (response.success) {
         myId = socket.id;
+        currentRoomCode = code;
       } else {
         showError(response.error || 'Failed to join game');
       }
@@ -769,6 +773,34 @@
   // Socket event handlers
   socket.on('connect', () => {
     myId = socket.id;
+
+    // Try to rejoin room if we were in one
+    if (isReconnecting && currentRoomCode && myName) {
+      socket.emit('rejoinRoom', currentRoomCode, myName, (response) => {
+        if (response.success) {
+          showToast('Reconnected!');
+        } else {
+          // Room no longer exists, go back to home
+          showToast('Room expired. Please create or join a new game.');
+          currentRoomCode = null;
+          showScreen('home');
+        }
+        isReconnecting = false;
+      });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    if (currentRoomCode) {
+      isReconnecting = true;
+      showToast('Connection lost. Reconnecting...');
+    }
+  });
+
+  socket.on('connect_error', () => {
+    if (currentRoomCode) {
+      showToast('Connection error. Retrying...');
+    }
   });
 
   socket.on('state', (state) => {

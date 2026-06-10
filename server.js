@@ -247,6 +247,61 @@ io.on('connection', (socket) => {
     broadcastState(room);
   });
 
+  socket.on('rejoinRoom', (code, name, callback) => {
+    const room = rooms.get(code.toUpperCase());
+
+    if (!room) {
+      callback({ success: false, error: 'Room not found' });
+      return;
+    }
+
+    // Find existing player by name
+    let existingPlayerId = null;
+    for (const [playerId, player] of Object.entries(room.players)) {
+      if (player.name === name) {
+        existingPlayerId = playerId;
+        break;
+      }
+    }
+
+    if (existingPlayerId) {
+      // Update existing player with new socket ID
+      const player = room.players[existingPlayerId];
+      delete room.players[existingPlayerId];
+      room.players[socket.id] = {
+        ...player,
+        id: socket.id,
+        connected: true
+      };
+
+      // Update order array
+      const orderIndex = room.order.indexOf(existingPlayerId);
+      if (orderIndex !== -1) {
+        room.order[orderIndex] = socket.id;
+      }
+
+      // Update host if needed
+      if (room.hostId === existingPlayerId) {
+        room.hostId = socket.id;
+      }
+    } else {
+      // Player not found, add as new player
+      room.players[socket.id] = { id: socket.id, name, connected: true, score: 0 };
+      room.order.push(socket.id);
+    }
+
+    socket.join(code);
+    currentRoom = code;
+    playerName = name;
+
+    callback({ success: true, code });
+
+    // Send chat history
+    socket.emit('chatHistory', room.messages.slice(-100));
+
+    broadcastState(room);
+  });
+
   socket.on('startGame', (options) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);

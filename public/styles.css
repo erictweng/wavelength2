@@ -128,6 +128,8 @@ html, body {
   flex-direction: column;
   border-left: 1px solid var(--border-color);
   background: var(--bg-secondary);
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Screens - base styles (positioning handled in transitions section) */
@@ -574,6 +576,7 @@ input[type="text"]::placeholder {
   padding: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .chat-messages {
@@ -583,6 +586,7 @@ input[type="text"]::placeholder {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+  min-height: 0;
 }
 
 .chat-message {
@@ -620,6 +624,7 @@ input[type="text"]::placeholder {
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
   border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .chat-input-container input {
